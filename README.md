@@ -1,53 +1,50 @@
-# TG WS Proxy
+# TG WS Proxy (Android / Termux Edition)
 
-Локальный SOCKS5-прокси для Telegram Desktop, который перенаправляет трафик через WebSocket-соединения к указанным серверам, помогая частично ускорить работу Telegram.  
-  
-**Ожидаемый результат аналогичен прокидыванию hosts для Web Telegram**: ускорение загрузки и скачивания файлов, загрузки сообщений и части медиа.
+Локальный SOCKS5-прокси для Telegram на Android, запускаемый через Termux. Приложение перенаправляет трафик через WebSocket-соединения к указанным серверам, помогая частично ускорить работу Telegram и обойти блокировки.
 
-<img width="529" height="487" alt="image" src="https://github.com/user-attachments/assets/6a4cf683-0df8-43af-86c1-0e8f08682b62" />
+**Ожидаемый результат аналогичен прокидыванию hosts для Web Telegram**: ускорение загрузки и скачивания файлов, загрузки сообщений и обход ограничений провайдера.
 
 ## Как это работает
 
 ```
-Telegram Desktop → SOCKS5 (127.0.0.1:1080) → TG WS Proxy → WSS (kws*.web.telegram.org) → Telegram DC
+Telegram Android → SOCKS5 (127.0.0.1:1080) → TG WS Proxy (Termux) → WSS (kws*.web.telegram.org) → Telegram DC
 ```
 
-1. Приложение поднимает локальный SOCKS5-прокси на `127.0.0.1:1080`
-2. Перехватывает подключения к IP-адресам Telegram
-3. Извлекает DC ID из MTProto obfuscation init-пакета
-4. Устанавливает WebSocket (TLS) соединение к соответствующему DC через домены `kws{N}.web.telegram.org`
-5. Если WS недоступен (302 redirect) — автоматически переключается на прямое TCP-соединение
+1. Скрипт поднимает локальный SOCKS5-прокси на `127.0.0.1:1080` в среде Termux.
+2. Перехватывает подключения к IP-адресам Telegram.
+3. Извлекает DC ID из MTProto obfuscation init-пакета.
+4. Устанавливает WebSocket (TLS) соединение к соответствующему DC через домены `kws{N}.web.telegram.org`.
+5. Если WS недоступен — автоматически переключается на прямое TCP-соединение.
 
 ## 🚀 Быстрый старт
 
-### Windows
-Перейдите на [страницу релизов](https://github.com/Flowseal/tg-ws-proxy/releases) и скачайте **`TgWsProxy.exe`**. Он собирается автоматически через [Github Actions](https://github.com/Flowseal/tg-ws-proxy/actions) из открытого исходного кода.
+### Android (Termux)
+Установите [Termux](https://f-droid.org/packages/com.termux/) (рекомендуется версия с F-Droid) и выполните одну команду:
 
-При первом запуске откроется окно с инструкцией по подключению Telegram Desktop. Приложение сворачивается в системный трей.
+```bash
+bash <(curl -s https://raw.githubusercontent.com/Superdetectiv4ik/tg-ws-proxy-android/main/install.sh)
+```
 
-**Меню трея:**
-- **Открыть в Telegram** — автоматически настроить прокси через `tg://socks` ссылку
-- **Перезапустить прокси** — перезапуск без выхода из приложения
-- **Настройки...** — GUI-редактор конфигурации
-- **Открыть логи** — открыть файл логов
-- **Выход** — остановить прокси и закрыть приложение
+Скрипт автоматически настроит окружение, установит зависимости и запустит прокси.
 
 ## Установка из исходников
 
+Если автоматический скрипт не сработал, выполните шаги вручную.
+
+### Android (Termux)
+
 ```bash
+pkg update && pkg install python git rust clang python-cryptography python-psutil python-pillow -y
+git clone https://github.com/ВАШ_ЛОГИН/tg-ws-proxy-android.git
+cd tg-ws-proxy-android
 pip install -r requirements.txt
 ```
 
-### Windows (Tray-приложение)
+### Запуск
 
 ```bash
-python windows.py
-```
-
-### Консольный режим
-
-```bash
-python proxy/tg_ws_proxy.py [--port PORT] [--dc-ip DC:IP ...] [-v]
+termux-wake-lock
+python main.py
 ```
 
 **Аргументы:**
@@ -55,61 +52,64 @@ python proxy/tg_ws_proxy.py [--port PORT] [--dc-ip DC:IP ...] [-v]
 | Аргумент | По умолчанию | Описание |
 |---|---|---|
 | `--port` | `1080` | Порт SOCKS5-прокси |
-| `--dc-ip` | `2:149.154.167.220`, `4:149.154.167.220` | Целевой IP для DC (можно указать несколько раз) |
+| `--dc-ip` | `5:91.108.56.190` | Целевой IP для DC (настраивается в config.json) |
 | `-v`, `--verbose` | выкл. | Подробное логирование (DEBUG) |
 
 **Примеры:**
 
 ```bash
 # Стандартный запуск
-python proxy/tg_ws_proxy.py
+python main.py
 
-# Другой порт и дополнительные DC
-python proxy/tg_ws_proxy.py --port 9050 --dc-ip 1:149.154.175.205 --dc-ip 2:149.154.167.220
+# Другой порт
+python main.py --port 9050
 
 # С подробным логированием
-python proxy/tg_ws_proxy.py -v
+python main.py -v
 ```
 
-## Настройка Telegram Desktop
-
-### Автоматически
-
-ПКМ по иконке в трее → **«Открыть в Telegram»**
+## Настройка Telegram Android
 
 ### Вручную
 
-1. Telegram → **Настройки** → **Продвинутые настройки** → **Тип подключения** → **Прокси**
-2. Добавить прокси:
+1. Telegram → **Настройки** → **Данные и память** → **Настройки прокси** (внизу)
+2. Нажмите **Добавить прокси**:
    - **Тип:** SOCKS5
    - **Сервер:** `127.0.0.1`
    - **Порт:** `1080`
    - **Логин/Пароль:** оставить пустыми
+3. Нажмите **Сохранить** и активируйте ползунок.
 
 ## Конфигурация
 
-Tray-приложение хранит данные в `%APPDATA%/TgWsProxy`:
+Приложение хранит данные в домашней директории Termux `~/TgWsProxy/config.json`:
 
 ```json
 {
   "port": 1080,
+  "host": "127.0.0.1",
   "dc_ip": [
-    "2:149.154.167.220",
-    "4:149.154.167.220"
+    "5:91.108.56.190"
   ],
   "verbose": false
 }
 ```
 
-## Автоматическая сборка
+**Список серверов (DC IP):**
+Для лучшего пинга измените `dc_ip` на ближайший к вам сервер:
 
-Проект содержит спецификацию PyInstaller ([`windows.spec`](packaging/windows.spec)) и GitHub Actions workflow ([`.github/workflows/build.yml`](.github/workflows/build.yml)) для автоматической сборки.
+*   **DC 1 (Miami):** `149.154.175.53`
+*   **DC 2 (Amsterdam):** `149.154.167.51`
+*   **DC 5 (Singapore):** `91.108.56.190`
 
-```bash
-pip install pyinstaller
-pyinstaller packaging/windows.spec
-```
+## Решение проблем
+
+*   **Высокий пинг (>1000ms):** Проверьте параметр `dc_ip` в конфиге, вы можете использовать далекий от вас сервер.
+*   **Прокси отваливается:** Android усыпляет фоновые процессы. Обязательно выполняйте команду `termux-wake-lock` перед запуском.
+*   **Ошибки при установке:** Убедитесь, что используете Termux из F-Droid, а не Google Play.
 
 ## Лицензия
 
 [MIT License](LICENSE)
+
+*Based on [Flowseal/tg-ws-proxy](https://github.com/Flowseal/tg-ws-proxy)*
