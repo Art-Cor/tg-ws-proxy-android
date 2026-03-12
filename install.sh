@@ -32,4 +32,4 @@ echo "Acquiring Wake Lock (keeps Android from sleeping)..."
 termux-wake-lock
 
 echo "Starting Proxy..."
-python main.py
+python android.py
